@@ -1,12 +1,12 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { getProduct, getProductReviews, createReview, deleteProduct } from '../api/products.js'
-import { useAuthStore } from '../stores/auth.js'
-import { useCartStore } from '../stores/cart.js'
-import { useWishlistStore } from '../stores/wishlist.js'
-import { useToast } from '../composables/useToast.js'
-import { useConfirm } from '../composables/useConfirm.js'
+import { getProduct, getProductReviews, createReview, deleteProduct } from '../../api/products.js'
+import { useAuthStore } from '../../stores/auth.js'
+import { useCartStore } from '../../stores/cart.js'
+import { useWishlistStore } from '../../stores/wishlist.js'
+import { useToast } from '../../composables/useToast.js'
+import { useConfirm } from '../../composables/useConfirm.js'
 
 const route = useRoute()
 const router = useRouter()
@@ -171,7 +171,7 @@ function onImgError(e) { e.target.style.display = 'none'; e.target.parentElement
 
     <div class="top-grid">
       <div class="product-image">
-        <img :src="product.image" :alt="product.name" @error="onImgError" />
+        <img :src="product.image" :alt="product.name" width="600" height="600" @error="onImgError" />
         <span v-if="outOfStock" class="badge-oos-lg">Out of Stock</span>
       </div>
       <div class="product-main">

@@ -1,8 +1,8 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
-import { useAuthStore } from '../stores/auth.js'
-import { updateProfile, changePassword } from '../api/profile.js'
-import { useToast } from '../composables/useToast.js'
+import { useAuthStore } from '../../stores/auth.js'
+import { updateProfile, changePassword } from '../../api/profile.js'
+import { useToast } from '../../composables/useToast.js'
 
 const auth = useAuthStore()
 const toast = useToast()

@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { getMe, logout, getUser } from '../api/auth.js'
+import { getMe, logout, getUser } from '../../api/auth.js'
 
 const router = useRouter()
 const user = ref(getUser())

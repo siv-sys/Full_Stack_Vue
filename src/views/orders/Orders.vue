@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import { getOrders } from '../api/orders.js'
+import { getOrders } from '../../api/orders.js'
 
 const orders = ref([])
 const meta = ref({})

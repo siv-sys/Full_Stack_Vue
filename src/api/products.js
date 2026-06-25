@@ -1,7 +1,11 @@
 import api from './axios.js'
 
+let productsAbort = null
+
 export function getProducts(params = {}) {
-  return api.get('/products', { params })
+  if (productsAbort) productsAbort.abort()
+  productsAbort = new AbortController()
+  return api.get('/products', { params, signal: productsAbort.signal })
 }
 
 export function getProduct(id) {
@@ -16,8 +20,11 @@ export function createReview(productId, data) {
   return api.post(`/products/${productId}/reviews`, data)
 }
 
+let categoriesCache = null
+
 export function getCategories() {
-  return api.get('/categories')
+  if (categoriesCache) return Promise.resolve(categoriesCache)
+  return api.get('/categories').then(res => { categoriesCache = res; return res })
 }
 
 export function createProduct(formData) {

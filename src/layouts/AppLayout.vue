@@ -156,11 +156,7 @@ async function requestLogout() {
     </header>
 
     <main class="main-content">
-      <router-view v-slot="{ Component }">
-        <Transition name="page" mode="out-in">
-          <component :is="Component" />
-        </Transition>
-      </router-view>
+      <router-view />
     </main>
   </div>
 </template>

@@ -1,23 +1,27 @@
 <script setup>
 import { ref, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { getProducts, getCategories } from '../api/products.js'
-import { useAuthStore } from '../stores/auth.js'
-import { useCartStore } from '../stores/cart.js'
-import { useWishlistStore } from '../stores/wishlist.js'
-import { useToast } from '../composables/useToast.js'
+import { getProducts, getCategories } from '../../api/products.js'
+import { useAuthStore } from '../../stores/auth.js'
+import { useCartStore } from '../../stores/cart.js'
+import { useWishlistStore } from '../../stores/wishlist.js'
+import { useProductsStore } from '../../stores/products.js'
+import { useToast } from '../../composables/useToast.js'
+import axios from 'axios'
 
 const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
 const cart = useCartStore()
 const wishlist = useWishlistStore()
+const productsStore = useProductsStore()
 const toast = useToast()
 
 const products = ref([])
 const categories = ref([])
 const meta = ref({})
 const loading = ref(true)
+const refreshing = ref(false)
 const fetchError = ref(false)
 
 const search = ref(route.query.search || '')
@@ -29,30 +33,59 @@ const page = ref(parseInt(route.query.page) || 1)
 
 let debounceTimer = null
 
+function buildParams() {
+  const params = { page: page.value, per_page: 12 }
+  if (search.value) params.search = search.value
+  if (category.value) params.category = category.value
+  if (minPrice.value) params.min_price = minPrice.value
+  if (maxPrice.value) params.max_price = maxPrice.value
+  if (sort.value) params.sort = sort.value
+  return params
+}
+
 async function fetchProducts() {
-  loading.value = true
+  const params = buildParams()
+
+  const cached = productsStore.getCached(params)
+  if (cached) {
+    products.value = cached.items
+    meta.value = cached.meta
+    loading.value = false
+    refreshing.value = false
+    return
+  }
+
+  const isRefresh = products.value.length > 0
+  if (isRefresh) refreshing.value = true
+  else loading.value = true
   fetchError.value = false
+
   try {
-    const params = { page: page.value, per_page: 12 }
-    if (search.value) params.search = search.value
-    if (category.value) params.category = category.value
-    if (minPrice.value) params.min_price = minPrice.value
-    if (maxPrice.value) params.max_price = maxPrice.value
-    if (sort.value) params.sort = sort.value
     const { data } = await getProducts(params)
-    products.value = data.items || data || []
-    meta.value = data.meta || {}
-  } catch {
+    const items = data.items || data || []
+    const fetchedMeta = data.meta || {}
+    products.value = items
+    meta.value = fetchedMeta
+    productsStore.setCache(params, { items, meta: fetchedMeta })
+  } catch (err) {
+    if (axios.isCancel(err)) return
     fetchError.value = true
   } finally {
     loading.value = false
+    refreshing.value = false
   }
 }
 
 async function loadCategories() {
+  if (productsStore.categoriesLoaded) {
+    categories.value = productsStore.categories
+    return
+  }
   try {
     const { data } = await getCategories()
-    categories.value = data || []
+    const cats = data || []
+    categories.value = cats
+    productsStore.setCategories(cats)
   } catch { /* optional */ }
 }
 
@@ -66,7 +99,10 @@ function onSearchInput() {
   debounceTimer = setTimeout(() => { applyFilters() }, 350)
 }
 
-onUnmounted(() => clearTimeout(debounceTimer))
+onUnmounted(() => {
+  clearTimeout(debounceTimer)
+  document.removeEventListener('visibilitychange', onVisibilityChange)
+})
 
 function pushQuery() {
   const query = {}
@@ -91,10 +127,28 @@ watch(() => route.query, q => {
   fetchProducts()
 }, { deep: true })
 
-onMounted(() => { loadCategories(); fetchProducts() })
+function onVisibilityChange() {
+  if (document.visibilityState === 'visible') {
+    productsStore.clearCache()
+    fetchProducts()
+  }
+}
+
+onMounted(() => {
+  Promise.all([loadCategories(), fetchProducts()])
+  document.addEventListener('visibilitychange', onVisibilityChange)
+})
 
 function formatPrice(p) { return parseFloat(p).toFixed(2) }
-function onImgError(e) { e.target.style.display = 'none'; e.target.parentElement.classList.add('img-fallback') }
+
+function thumbSrc(product) {
+  return product.thumbnail || product.image
+}
+
+function onImgError(e) {
+  e.target.style.display = 'none'
+  e.target.parentElement.classList.add('img-fallback')
+}
 
 async function quickAdd(product) {
   if (!auth.isAuthenticated) { router.push({ path: '/login', query: { redirect: '/products' } }); return }
@@ -175,11 +229,11 @@ async function toggleHeart(product) {
     </div>
 
     <!-- Grid -->
-    <div v-else-if="products.length" class="grid">
+    <div v-else-if="products.length" class="grid" :class="{ refreshing }">
       <div v-for="product in products" :key="product.id" class="card">
         <router-link :to="`/products/${product.id}`" class="card-img-link">
           <div class="card-img">
-            <img :src="product.image" :alt="product.name" loading="lazy" @error="onImgError" />
+            <img :src="thumbSrc(product)" :alt="product.name" loading="lazy" width="300" height="300" @error="onImgError" />
             <span v-if="product.stock === 0" class="badge-oos">Out of Stock</span>
           </div>
         </router-link>
@@ -322,6 +376,9 @@ async function toggleHeart(product) {
 
 .skeleton-card .card-body { padding: 14px; }
 .card-img-skel { aspect-ratio: 1; }
+
+/* Refreshing overlay */
+.grid.refreshing { opacity: 0.5; pointer-events: none; transition: opacity 0.15s; }
 
 /* Empty */
 .empty { text-align: center; padding: 48px 0; color: var(--text); }

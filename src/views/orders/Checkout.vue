@@ -1,9 +1,9 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { useCartStore } from '../stores/cart.js'
-import { checkout } from '../api/orders.js'
-import { useToast } from '../composables/useToast.js'
+import { useCartStore } from '../../stores/cart.js'
+import { checkout } from '../../api/orders.js'
+import { useToast } from '../../composables/useToast.js'
 
 const router = useRouter()
 const cart = useCartStore()

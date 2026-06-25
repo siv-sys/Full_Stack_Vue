@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { getOrder } from '../api/orders.js'
+import { getOrder } from '../../api/orders.js'
 
 const route = useRoute()
 const order = ref(null)

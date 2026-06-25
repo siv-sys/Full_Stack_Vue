@@ -3,7 +3,7 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
 import { setRouter } from './api/axios.js'
-import './style.css'
+import './styles/style.css'
 
 setRouter(router)
 

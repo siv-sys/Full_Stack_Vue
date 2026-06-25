@@ -1,9 +1,9 @@
 <script setup>
 import { onMounted } from 'vue'
-import { useWishlistStore } from '../stores/wishlist.js'
-import { useCartStore } from '../stores/cart.js'
-import { useConfirm } from '../composables/useConfirm.js'
-import { useToast } from '../composables/useToast.js'
+import { useWishlistStore } from '../../stores/wishlist.js'
+import { useCartStore } from '../../stores/cart.js'
+import { useConfirm } from '../../composables/useConfirm.js'
+import { useToast } from '../../composables/useToast.js'
 
 const wishlist = useWishlistStore()
 const cart = useCartStore()

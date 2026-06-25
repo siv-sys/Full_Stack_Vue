@@ -6,12 +6,12 @@ export const useWishlistStore = defineStore('wishlist', () => {
   const items = ref([])
   const loading = ref(false)
 
-  const productIds = computed(() =>
-    items.value.map(item => item.product_id || item.product?.id)
+  const productIdSet = computed(() =>
+    new Set(items.value.map(item => item.product_id || item.product?.id))
   )
 
   function isInWishlist(productId) {
-    return productIds.value.includes(productId)
+    return productIdSet.value.has(productId)
   }
 
   async function fetchWishlist() {
@@ -25,14 +25,28 @@ export const useWishlistStore = defineStore('wishlist', () => {
   }
 
   async function add(productId) {
-    await wishlistApi.addToWishlist(productId)
-    await fetchWishlist()
+    const optimistic = { id: Date.now(), product_id: productId }
+    items.value.push(optimistic)
+    try {
+      await wishlistApi.addToWishlist(productId)
+      const { data } = await wishlistApi.getWishlist()
+      items.value = data.items || data || []
+    } catch (err) {
+      items.value = items.value.filter(i => i !== optimistic)
+      throw err
+    }
   }
 
   async function remove(productId) {
-    await wishlistApi.removeFromWishlist(productId)
-    await fetchWishlist()
+    const prev = [...items.value]
+    items.value = items.value.filter(i => (i.product_id || i.product?.id) !== productId)
+    try {
+      await wishlistApi.removeFromWishlist(productId)
+    } catch (err) {
+      items.value = prev
+      throw err
+    }
   }
 
-  return { items, loading, productIds, isInWishlist, fetchWishlist, add, remove }
+  return { items, loading, productIdSet, isInWishlist, fetchWishlist, add, remove }
 })

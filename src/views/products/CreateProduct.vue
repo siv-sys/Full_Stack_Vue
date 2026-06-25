@@ -1,8 +1,8 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { getCategories, createProduct } from '../api/products.js'
-import { useToast } from '../composables/useToast.js'
+import { getCategories, createProduct } from '../../api/products.js'
+import { useToast } from '../../composables/useToast.js'
 
 const router = useRouter()
 const toast = useToast()

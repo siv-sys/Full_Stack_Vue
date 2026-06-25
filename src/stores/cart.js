@@ -28,18 +28,43 @@ export const useCartStore = defineStore('cart', () => {
   }
 
   async function addItem(productId, quantity = 1) {
-    await cartApi.addToCart(productId, quantity)
-    await fetchCart()
+    const existing = items.value.find(i => (i.product?.id || i.product_id) === productId)
+    if (existing) {
+      existing.quantity += quantity
+    } else {
+      items.value.push({ id: Date.now(), product_id: productId, quantity })
+    }
+    try {
+      await cartApi.addToCart(productId, quantity)
+      const { data } = await cartApi.getCart()
+      items.value = data.items || data || []
+    } catch (err) {
+      await fetchCart()
+      throw err
+    }
   }
 
   async function updateQuantity(itemId, quantity) {
-    await cartApi.updateCartItem(itemId, quantity)
-    await fetchCart()
+    const item = items.value.find(i => i.id === itemId)
+    const prevQty = item?.quantity
+    if (item) item.quantity = quantity
+    try {
+      await cartApi.updateCartItem(itemId, quantity)
+    } catch (err) {
+      if (item && prevQty !== undefined) item.quantity = prevQty
+      throw err
+    }
   }
 
   async function removeItem(itemId) {
-    await cartApi.removeCartItem(itemId)
-    await fetchCart()
+    const prev = [...items.value]
+    items.value = items.value.filter(i => i.id !== itemId)
+    try {
+      await cartApi.removeCartItem(itemId)
+    } catch (err) {
+      items.value = prev
+      throw err
+    }
   }
 
   return { items, loading, total, itemCount, fetchCart, addItem, updateQuantity, removeItem }

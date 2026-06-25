@@ -1,5 +1,5 @@
 <script setup>
-import { useConfirm } from '../composables/useConfirm.js'
+import { useConfirm } from '../../composables/useConfirm.js'
 import { ref } from 'vue'
 
 const { visible, title, message, confirmLabel, danger, onConfirm, onCancel } = useConfirm()

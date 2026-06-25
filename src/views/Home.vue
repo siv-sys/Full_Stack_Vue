@@ -30,6 +30,10 @@ onMounted(async () => {
 
 function formatPrice(p) { return parseFloat(p).toFixed(2) }
 
+function thumbSrc(product) {
+  return product.thumbnail || product.image
+}
+
 function onImgError(e) {
   e.target.style.display = 'none'
   e.target.parentElement.classList.add('img-fallback')
@@ -105,7 +109,7 @@ async function toggleHeart(product) {
         <div v-for="product in featured" :key="product.id" class="card">
           <router-link :to="`/products/${product.id}`" class="card-img-link">
             <div class="card-img">
-              <img :src="product.image" :alt="product.name" loading="lazy" @error="onImgError" />
+              <img :src="thumbSrc(product)" :alt="product.name" loading="lazy" width="300" height="300" @error="onImgError" />
               <span v-if="product.stock === 0" class="badge-oos">Out of Stock</span>
             </div>
           </router-link>
